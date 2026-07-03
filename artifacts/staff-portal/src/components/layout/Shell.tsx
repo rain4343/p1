@@ -1,67 +1,107 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, Building2, Shield, Menu } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Shield, Menu, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Overview", href: "/" },
-  { icon: Users, label: "Staff", href: "/staff" },
-  { icon: Building2, label: "Departments", href: "/departments" },
-  { icon: Shield, label: "Roles", href: "/roles" },
+  { icon: LayoutDashboard, label: "داشبۆرد", href: "/" },
+  { icon: Users, label: "بەڕێوەبردنی فەرمانبەران", href: "/staff" },
+  { icon: Building2, label: "بەڕێوەبردنی هۆبەکان", href: "/departments" },
+  { icon: Shield, label: "بەڕێوەبردنی ڕۆڵەکان", href: "/roles" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col gap-4 py-6">
-      <div className="px-6">
-        <h2 className="text-lg font-bold text-sidebar-primary flex items-center gap-2">
-          <div className="h-6 w-6 rounded bg-sidebar-primary/20 flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-sidebar-primary" />
-          </div>
-          Staff Portal
+    <div className="flex h-full flex-col py-6" dir="rtl">
+      {/* Brand */}
+      <div className="px-6 mb-6">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2" style={{ fontFamily: "'Noto Kufi Arabic', sans-serif" }}>
+          ئی-ڕێکار
         </h2>
+        <p className="text-xs text-slate-400 mt-0.5" style={{ fontFamily: "'Noto Kufi Arabic', sans-serif" }}>
+          پانێڵی بەڕێوەبردن
+        </p>
       </div>
-      <div className="px-3">
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
-            return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'}`}>
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 space-y-1">
+        {navItems.map((item) => {
+          const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-300 hover:bg-slate-700 hover:text-white"
+              }`}
+              style={{ fontFamily: "'Noto Kufi Arabic', sans-serif" }}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* User + Logout */}
+      <div className="px-3 mt-4 pt-4 border-t border-slate-700">
+        {user && (
+          <div className="px-3 py-2 mb-2" style={{ fontFamily: "'Noto Kufi Arabic', sans-serif" }}>
+            <p className="text-xs text-slate-400">داخڵبووی</p>
+            <p className="text-sm font-medium text-white truncate">{user.full_name || user.username}</p>
+          </div>
+        )}
+        <button
+          onClick={logout}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+          style={{ fontFamily: "'Noto Kufi Arabic', sans-serif" }}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          دەرچوون
+        </button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background" dir="rtl">
       {/* Desktop Sidebar */}
-      <div className="hidden border-r border-sidebar-border bg-sidebar md:block md:w-64">
-        <SidebarContent />
+      <div
+        className="hidden md:block md:w-64 shrink-0"
+        style={{ background: "#1e293b", borderLeft: "1px solid #334155" }}
+      >
+        <div className="sticky top-0 h-screen">
+          <SidebarContent />
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Mobile Header */}
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:hidden">
+        <header
+          className="flex h-14 items-center gap-4 px-4 md:hidden"
+          style={{ background: "#1e293b", borderBottom: "1px solid #334155" }}
+        >
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">مێنو</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
+            <SheetContent side="right" className="w-64 p-0" style={{ background: "#1e293b", border: "none" }}>
               <SidebarContent />
             </SheetContent>
           </Sheet>
-          <div className="font-semibold">Staff Portal</div>
+          <div className="font-bold text-white" style={{ fontFamily: "'Noto Kufi Arabic', sans-serif" }}>
+            ئی-ڕێکار
+          </div>
         </header>
 
         {/* Main Content */}

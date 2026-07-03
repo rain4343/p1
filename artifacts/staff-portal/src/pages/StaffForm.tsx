@@ -3,11 +3,11 @@ import { useRoute, useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ArrowLeft, Save, Shield, User, Mail, Hash, Building2 } from "lucide-react";
-import { 
+import { ArrowRight, Save, Shield, User, Mail, Hash, Building2 } from "lucide-react";
+import {
   useGetUser, getGetUserQueryKey,
-  useCreateUser, 
-  useUpdateUser, 
+  useCreateUser,
+  useUpdateUser,
   useListDepartments, getListDepartmentsQueryKey,
   useListRoles, getListRolesQueryKey,
   useGetUserRoles, getGetUserRolesQueryKey,
@@ -22,11 +22,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+const ku: React.CSSProperties = { fontFamily: "'Noto Kufi Arabic', sans-serif" };
+
 const userSchema = z.object({
-  full_name: z.string().min(1, "Full name is required").max(150),
-  username: z.string().min(1, "Username is required").max(50),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters").or(z.literal("")),
+  full_name: z.string().min(1, "ناوی تەواو پێویستە").max(150),
+  username: z.string().min(1, "ناوی بەکارهێنەر پێویستە").max(50),
+  email: z.string().email("ئیمەیڵ هەڵەیە"),
+  password: z.string().min(6, "ووشەی نهێنی دەبێت کەمتر نەبێت لە ٦ پیت").or(z.literal("")),
   department_id: z.coerce.number().nullable().optional(),
   role_ids: z.array(z.number()).default([])
 });
@@ -41,25 +43,25 @@ export default function StaffForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading: loadingUser } = useGetUser(userId as number, { 
-    query: { enabled: !!userId, queryKey: getGetUserQueryKey(userId as number) } 
+  const { data: user, isLoading: loadingUser } = useGetUser(userId as number, {
+    query: { enabled: !!userId, queryKey: getGetUserQueryKey(userId as number) }
   });
-  
+
   const { data: userRoles } = useGetUserRoles(userId as number, {
     query: { enabled: !!userId, queryKey: getGetUserRolesQueryKey(userId as number) }
   });
-  
+
   const { data: departments } = useListDepartments({ query: { queryKey: getListDepartmentsQueryKey() } });
   const { data: roles } = useListRoles({ query: { queryKey: getListRolesQueryKey() } });
 
   const createMutation = useCreateUser({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Staff member added successfully" });
+        toast({ title: "فەرمانبەرەکە بە سەرکەوتوویی زیادکرا." });
         setLocation("/staff");
       },
       onError: (err: any) => {
-        toast({ title: "Error creating staff", description: err.message, variant: "destructive" });
+        toast({ title: "هەڵە لە دروستکردن", description: err.message, variant: "destructive" });
       }
     }
   });
@@ -67,11 +69,11 @@ export default function StaffForm() {
   const updateMutation = useUpdateUser({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Staff member updated successfully" });
+        toast({ title: "فەرمانبەرەکە بە سەرکەوتوویی نوێکرایەوە." });
         setLocation("/staff");
       },
       onError: (err: any) => {
-        toast({ title: "Error updating staff", description: err.message, variant: "destructive" });
+        toast({ title: "هەڵە لە نوێکردنەوە", description: err.message, variant: "destructive" });
       }
     }
   });
@@ -96,14 +98,7 @@ export default function StaffForm() {
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
-    defaultValues: {
-      full_name: "",
-      username: "",
-      email: "",
-      password: "",
-      department_id: null,
-      role_ids: []
-    }
+    defaultValues: { full_name: "", username: "", email: "", password: "", department_id: null, role_ids: [] }
   });
 
   const initializedRef = useRef(false);
@@ -113,30 +108,26 @@ export default function StaffForm() {
         full_name: user.full_name,
         username: user.username,
         email: user.email,
-        password: "", // Never prefill password
+        password: "",
         department_id: user.department_id,
         role_ids: userRoles?.map(r => r.id) || []
       });
-      // We only re-initialize if the user id changes
       initializedRef.current = true;
     }
   }, [user, userRoles, form]);
-  
-  useEffect(() => {
-    return () => { initializedRef.current = false; };
-  }, [userId]);
+
+  useEffect(() => { return () => { initializedRef.current = false; }; }, [userId]);
 
   const onSubmit = (values: UserFormValues) => {
     if (isNew) {
       if (!values.password) {
-        form.setError("password", { message: "Password is required for new users" });
+        form.setError("password", { message: "ووشەی نهێنی بۆ فەرمانبەری نوێ پێویستە" });
         return;
       }
       createMutation.mutate({ data: values as any });
     } else {
       const updateData = { ...values };
       if (!updateData.password) delete (updateData as any).password;
-      // Exclude role_ids from update if we are managing them individually
       delete (updateData as any).role_ids;
       updateMutation.mutate({ id: userId as number, data: updateData });
     }
@@ -144,17 +135,10 @@ export default function StaffForm() {
 
   const handleRoleToggle = (roleId: number, checked: boolean) => {
     if (isNew) {
-      // Just update form state for new users (handled by the useCreateUser API)
       const currentRoles = form.getValues().role_ids;
-      if (checked) {
-        form.setValue("role_ids", [...currentRoles, roleId]);
-      } else {
-        form.setValue("role_ids", currentRoles.filter(id => id !== roleId));
-      }
+      form.setValue("role_ids", checked ? [...currentRoles, roleId] : currentRoles.filter(id => id !== roleId));
       return;
     }
-
-    // For existing users, use the dedicated assign/remove role hooks
     if (checked) {
       assignRoleMutation.mutate({ id: userId as number, data: { role_id: roleId } });
     } else {
@@ -165,149 +149,137 @@ export default function StaffForm() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   if (!isNew && loadingUser) {
-    return <div className="p-8 text-center text-muted-foreground">Loading staff record...</div>;
+    return <div className="p-8 text-center text-muted-foreground" style={ku}>چاوەڕێ بکە...</div>;
   }
 
   const currentFormRoles = form.watch("role_ids");
 
   return (
-    <div className="max-w-3xl space-y-6" data-testid="page-staff-form">
+    <div className="max-w-3xl space-y-6" data-testid="page-staff-form" style={ku}>
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
-          <Link href="/staff"><ArrowLeft className="h-4 w-4" /></Link>
+          <Link href="/staff"><ArrowRight className="h-4 w-4" /></Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{isNew ? "Add Staff Member" : "Edit Staff Member"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isNew ? "زیادکردنی فەرمانبەری نوێ" : "دەستکاریکردنی فەرمانبەر"}
+          </h1>
           <p className="text-muted-foreground mt-1">
-            {isNew ? "Create a new personnel record and assign access." : "Update personnel details and adjust access levels."}
+            {isNew ? "تۆمارێکی نوێ دروست بکە و دەسەڵات دابنێ." : "زانیاری فەرمانبەر بگۆڕە."}
           </p>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Personal Info */}
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <User className="h-5 w-5 text-muted-foreground" />
-                Personal Information
+                زانیاری کەسی
               </CardTitle>
-              <CardDescription>Core identity and contact details.</CardDescription>
+              <CardDescription>ناو و زانیاری پەیوەندی فەرمانبەر.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="full_name"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Full Legal Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Jane Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="full_name" render={({ field }) => (
+                <FormItem className="sm:col-span-2">
+                  <FormLabel>ناوی تەواو</FormLabel>
+                  <FormControl>
+                    <Input placeholder="بۆ نموونە: ئەحمەد محەمەد" className="text-right" style={ku} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="jdoe" className="pl-9" {...field} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="username" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ناوی بەکارهێنەر</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Hash className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="ahmad.m" className="pr-9 text-right" style={ku} {...field} />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Official Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input type="email" placeholder="jane.doe@organization.org" className="pl-9" {...field} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ئیمەیڵ</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input type="email" placeholder="ahmad@example.com" className="pr-9 text-right" style={ku} {...field} />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>{isNew ? "Initial Password" : "Reset Password"}</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder={isNew ? "Create a secure password" : "Leave blank to keep current password"} {...field} />
-                    </FormControl>
-                    {isNew && <FormDescription>Required for initial setup. User should change this later.</FormDescription>}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="password" render={({ field }) => (
+                <FormItem className="sm:col-span-2">
+                  <FormLabel>{isNew ? "ووشەی نهێنی" : "گۆڕینی ووشەی نهێنی"}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder={isNew ? "ووشەی نهێنی دروست بکە" : "بۆ نەگۆڕین بەتاڵ بهێڵەرەوە"}
+                      style={ku}
+                      {...field}
+                    />
+                  </FormControl>
+                  {isNew && <FormDescription>پێویستە بۆ دروستکردنی هەژمار.</FormDescription>}
+                  <FormMessage />
+                </FormItem>
+              )} />
             </CardContent>
           </Card>
 
+          {/* Department */}
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-muted-foreground" />
-                Department & Assignment
+                هۆبە و جێگیرکردن
               </CardTitle>
-              <CardDescription>Organizational placement.</CardDescription>
+              <CardDescription>هۆبەی ئەم فەرمانبەرە دیاری بکە.</CardDescription>
             </CardHeader>
             <CardContent>
-              <FormField
-                control={form.control}
-                name="department_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <Select 
-                      onValueChange={(val) => field.onChange(val === "none" ? null : Number(val))} 
-                      value={field.value ? field.value.toString() : "none"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a department" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Unassigned</SelectItem>
-                        {departments?.map(dept => (
-                          <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="department_id" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>هۆبە</FormLabel>
+                  <Select
+                    onValueChange={(val) => field.onChange(val === "none" ? null : Number(val))}
+                    value={field.value ? field.value.toString() : "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger style={ku}>
+                        <SelectValue placeholder="هۆبەیەک هەڵبژێرە" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent style={ku}>
+                      <SelectItem value="none">بێ هۆبە</SelectItem>
+                      {departments?.map(dept => (
+                        <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
             </CardContent>
           </Card>
 
+          {/* Roles */}
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Shield className="h-5 w-5 text-muted-foreground" />
-                Access Roles
+                ڕۆڵەکان و دەسەڵات
               </CardTitle>
               <CardDescription>
-                {isNew 
-                  ? "Select capabilities and permissions to assign upon creation." 
-                  : "Changes to roles take effect immediately."}
+                {isNew ? "ڕۆڵەکان دیاری بکە لەکاتی دروستکردندا." : "گۆڕانکاری لە ڕۆڵەکان دەستبەجێ کاردەکات."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -315,19 +287,15 @@ export default function StaffForm() {
                 {roles?.map((role) => {
                   const isAssigned = isNew ? currentFormRoles.includes(role.id) : (userRoles?.some(r => r.id === role.id) ?? false);
                   const isRoleChanging = assignRoleMutation.isPending || removeRoleMutation.isPending;
-                  
                   return (
-                    <div
-                      key={role.id}
-                      className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm"
-                    >
+                    <div key={role.id} className="flex flex-row-reverse items-start gap-3 rounded-md border p-4 shadow-sm">
                       <Checkbox
                         checked={isAssigned}
                         disabled={!isNew && isRoleChanging}
                         onCheckedChange={(checked) => handleRoleToggle(role.id, !!checked)}
                       />
-                      <div className="space-y-1 leading-none">
-                        <label className="font-medium text-sm leading-none cursor-pointer">
+                      <div className="space-y-1 leading-none flex-1 text-right">
+                        <label className="font-medium text-sm leading-none cursor-pointer" style={ku}>
                           {role.name}
                         </label>
                       </div>
@@ -338,17 +306,17 @@ export default function StaffForm() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-4 pb-12">
-            <Button type="button" variant="outline" asChild>
-              <Link href="/staff">Cancel</Link>
-            </Button>
-            <Button type="submit" disabled={isPending} className="min-w-[120px]">
-              {isPending ? "Saving..." : (
+          <div className="flex justify-start gap-4 pb-12">
+            <Button type="submit" disabled={isPending} className="min-w-[120px]" style={ku}>
+              {isPending ? "چاوەڕێ بکە..." : (
                 <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Record
+                  <Save className="h-4 w-4 ml-2" />
+                  پاشەکەوتکردن
                 </>
               )}
+            </Button>
+            <Button type="button" variant="outline" asChild style={ku}>
+              <Link href="/staff">پاشگەزبوونەوە</Link>
             </Button>
           </div>
         </form>
