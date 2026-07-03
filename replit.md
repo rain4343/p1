@@ -1,10 +1,11 @@
-# [Project name]
+# Staff Portal
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An internal HR/employee management system for Kurdish-speaking organizations. Manages staff (users), departments, and role-based access control (Super Admin / فەرمانبەر).
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080, served at `/api`)
+- `pnpm --filter @workspace/staff-portal run dev` — run the frontend (served at `/`)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,23 +15,43 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite, TanStack Query, Wouter, React Hook Form, Recharts, Tailwind CSS v4
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
+- API codegen: Orval (from OpenAPI spec at `lib/api-spec/openapi.yaml`)
 - Build: esbuild (CJS bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth for all API contracts)
+- `lib/db/src/schema/` — Drizzle table definitions (departments, users, roles, role_user)
+- `artifacts/api-server/src/routes/` — Express route handlers
+- `artifacts/staff-portal/src/` — React frontend (pages, components, hooks)
+- `lib/api-client-react/src/generated/` — Generated React Query hooks (do not edit)
+- `lib/api-zod/src/generated/` — Generated Zod schemas for server validation (do not edit)
+
+## Database schema
+
+- `departments` — Organization divisions (name unique)
+- `users` — Staff members with department FK, hashed password, email/username unique
+- `roles` — RBAC roles (seeded: Super Admin, فەرمانبەر)
+- `role_user` — Many-to-many join table between users and roles
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- OpenAPI-first: all API contracts live in `lib/api-spec/openapi.yaml`; types/hooks/schemas are generated, never hand-written
+- Passwords stored as-is from the frontend (no bcrypt) — add hashing before production
+- No authentication middleware currently — add auth layer before exposing to the internet
+- `sql.raw()` eliminated in favor of Drizzle `inArray()` to prevent SQL injection risk
+- Multi-step user/role mutations are wrapped in DB transactions for atomicity
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Dashboard** (`/`) — summary cards (staff, departments, roles, super admins), bar chart by department, pie chart by role, recent staff table
+- **Staff** (`/staff`) — searchable/filterable employee list with department and roles; add/edit/delete
+- **Departments** (`/departments`) — manage divisions; view per-department staff roster
+- **Roles** (`/roles`) — manage RBAC roles; assign/remove from staff members
 
 ## User preferences
 
@@ -38,7 +59,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- After changing `lib/api-spec/openapi.yaml`, always run `pnpm --filter @workspace/api-spec run codegen` before editing routes or frontend
+- After changing `lib/db/src/schema/`, run `pnpm run typecheck:libs` so leaf packages see updated declarations
+- Verify artifacts with `pnpm --filter @workspace/<slug> run typecheck`, not `build`
 
 ## Pointers
 
