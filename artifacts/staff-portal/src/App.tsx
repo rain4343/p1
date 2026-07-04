@@ -12,6 +12,9 @@ import StaffForm from '@/pages/StaffForm';
 import Departments from '@/pages/Departments';
 import DepartmentDetail from '@/pages/DepartmentDetail';
 import Roles from '@/pages/Roles';
+import Documents from '@/pages/Documents';
+import DocumentForm from '@/pages/DocumentForm';
+import DocumentDetail from '@/pages/DocumentDetail';
 import Login from '@/pages/Login';
 
 const queryClient = new QueryClient();
@@ -41,6 +44,10 @@ function ProtectedRouter() {
         <Route path="/departments" component={Departments} />
         <Route path="/departments/:id" component={DepartmentDetail} />
         <Route path="/roles" component={Roles} />
+        <Route path="/documents" component={Documents} />
+        <Route path="/documents/new" component={DocumentForm} />
+        <Route path="/documents/:id/edit" component={DocumentForm} />
+        <Route path="/documents/:id" component={DocumentDetail} />
         <Route component={NotFound} />
       </Switch>
     </Shell>

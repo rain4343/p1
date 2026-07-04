@@ -410,3 +410,179 @@ export const GetRecentStaffResponseItem = zod.object({
 export const GetRecentStaffResponse = zod.array(GetRecentStaffResponseItem)
 
 
+/**
+ * @summary List all documents
+ */
+export const ListDocumentsQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional()
+})
+
+export const ListDocumentsResponseItem = zod.object({
+  "id": zod.number(),
+  "document_number": zod.string(),
+  "document_date": zod.coerce.date(),
+  "subject": zod.string(),
+  "creator_id": zod.number(),
+  "creator_name": zod.string().nullish(),
+  "current_status": zod.string(),
+  "file_path": zod.string(),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+export const ListDocumentsResponse = zod.array(ListDocumentsResponseItem)
+
+
+/**
+ * @summary Create a document
+ */
+export const createDocumentBodyDocumentNumberMax = 100;
+
+export const createDocumentBodySubjectMax = 255;
+
+export const createDocumentBodyCurrentStatusMax = 50;
+
+export const createDocumentBodyFilePathMax = 500;
+
+
+
+export const CreateDocumentBody = zod.object({
+  "document_number": zod.string().min(1).max(createDocumentBodyDocumentNumberMax),
+  "document_date": zod.coerce.date(),
+  "subject": zod.string().min(1).max(createDocumentBodySubjectMax),
+  "creator_id": zod.number(),
+  "current_status": zod.string().max(createDocumentBodyCurrentStatusMax).optional(),
+  "file_path": zod.string().min(1).max(createDocumentBodyFilePathMax)
+})
+
+export const CreateDocumentResponse = zod.object({
+  "id": zod.number(),
+  "document_number": zod.string(),
+  "document_date": zod.coerce.date(),
+  "subject": zod.string(),
+  "creator_id": zod.number(),
+  "creator_name": zod.string().nullish(),
+  "current_status": zod.string(),
+  "file_path": zod.string(),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get a document by ID
+ */
+export const GetDocumentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetDocumentResponse = zod.object({
+  "id": zod.number(),
+  "document_number": zod.string(),
+  "document_date": zod.coerce.date(),
+  "subject": zod.string(),
+  "creator_id": zod.number(),
+  "creator_name": zod.string().nullish(),
+  "current_status": zod.string(),
+  "file_path": zod.string(),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a document
+ */
+export const UpdateDocumentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateDocumentBodyDocumentNumberMax = 100;
+
+export const updateDocumentBodySubjectMax = 255;
+
+export const updateDocumentBodyCurrentStatusMax = 50;
+
+export const updateDocumentBodyFilePathMax = 500;
+
+
+
+export const UpdateDocumentBody = zod.object({
+  "document_number": zod.string().min(1).max(updateDocumentBodyDocumentNumberMax).optional(),
+  "document_date": zod.coerce.date().optional(),
+  "subject": zod.string().min(1).max(updateDocumentBodySubjectMax).optional(),
+  "creator_id": zod.number().optional(),
+  "current_status": zod.string().max(updateDocumentBodyCurrentStatusMax).optional(),
+  "file_path": zod.string().min(1).max(updateDocumentBodyFilePathMax).optional()
+})
+
+export const UpdateDocumentResponse = zod.object({
+  "id": zod.number(),
+  "document_number": zod.string(),
+  "document_date": zod.coerce.date(),
+  "subject": zod.string(),
+  "creator_id": zod.number(),
+  "creator_name": zod.string().nullish(),
+  "current_status": zod.string(),
+  "file_path": zod.string(),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a document
+ */
+export const DeleteDocumentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteDocumentResponse = zod.void()
+
+
+/**
+ * @summary List activity logs for a document
+ */
+export const ListDocumentLogsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListDocumentLogsResponseItem = zod.object({
+  "id": zod.number(),
+  "document_id": zod.number(),
+  "user_id": zod.number().nullish(),
+  "user_name": zod.string().nullish(),
+  "action": zod.string(),
+  "notes": zod.string().nullish(),
+  "timestamp": zod.coerce.date()
+})
+export const ListDocumentLogsResponse = zod.array(ListDocumentLogsResponseItem)
+
+
+/**
+ * @summary Add an activity log entry for a document
+ */
+export const CreateDocumentLogParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const createDocumentLogBodyActionMax = 100;
+
+
+
+export const CreateDocumentLogBody = zod.object({
+  "action": zod.string().min(1).max(createDocumentLogBodyActionMax),
+  "notes": zod.string().optional()
+})
+
+export const CreateDocumentLogResponse = zod.object({
+  "id": zod.number(),
+  "document_id": zod.number(),
+  "user_id": zod.number().nullish(),
+  "user_name": zod.string().nullish(),
+  "action": zod.string(),
+  "notes": zod.string().nullish(),
+  "timestamp": zod.coerce.date()
+})
+
+

@@ -124,9 +124,94 @@ export interface RoleCount {
   staff_count: number;
 }
 
+export interface Document {
+  id: number;
+  document_number: string;
+  document_date: string;
+  subject: string;
+  creator_id: number;
+  /** @nullable */
+  creator_name?: string | null;
+  current_status: string;
+  file_path: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DocumentInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  document_number: string;
+  document_date: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  subject: string;
+  creator_id: number;
+  /** @maxLength 50 */
+  current_status?: string;
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  file_path: string;
+}
+
+export interface DocumentUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  document_number?: string;
+  document_date?: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  subject?: string;
+  creator_id?: number;
+  /** @maxLength 50 */
+  current_status?: string;
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  file_path?: string;
+}
+
+export interface DocumentLog {
+  id: number;
+  document_id: number;
+  /** @nullable */
+  user_id?: number | null;
+  /** @nullable */
+  user_name?: string | null;
+  action: string;
+  /** @nullable */
+  notes?: string | null;
+  timestamp: string;
+}
+
+export interface DocumentLogInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  action: string;
+  notes?: string;
+}
+
 export type ListUsersParams = {
 department_id?: number;
 role_id?: number;
 search?: string;
+};
+
+export type ListDocumentsParams = {
+search?: string;
+status?: string;
 };
 

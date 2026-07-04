@@ -18,6 +18,8 @@ tags:
     description: Role management
   - name: dashboard
     description: Dashboard summary data
+  - name: documents
+    description: Document tracking and activity logs
 
 paths:
   /healthz:
@@ -524,6 +526,197 @@ paths:
                 items:
                   $ref: "#/components/schemas/UserWithRoles"
 
+  # ── Documents ─────────────────────────────────────────────────
+  /documents:
+    get:
+      operationId: listDocuments
+      tags: [documents]
+      summary: List all documents
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+    post:
+      operationId: createDocument
+      tags: [documents]
+      summary: Create a document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Document number already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /documents/{id}:
+    get:
+      operationId: getDocument
+      tags: [documents]
+      summary: Get a document by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateDocument
+      tags: [documents]
+      summary: Update a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteDocument
+      tags: [documents]
+      summary: Delete a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /documents/{id}/logs:
+    get:
+      operationId: listDocumentLogs
+      tags: [documents]
+      summary: List activity logs for a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of document logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentLog"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createDocumentLog
+      tags: [documents]
+      summary: Add an activity log entry for a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentLogInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentLog"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -709,3 +902,111 @@ components:
           type: string
         staff_count:
           type: integer
+
+    Document:
+      type: object
+      required: [id, document_number, document_date, subject, creator_id, current_status, file_path, created_at, updated_at]
+      properties:
+        id:
+          type: integer
+        document_number:
+          type: string
+        document_date:
+          type: string
+          format: date
+        subject:
+          type: string
+        creator_id:
+          type: integer
+        creator_name:
+          type: ["string", "null"]
+        current_status:
+          type: string
+        file_path:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DocumentInput:
+      type: object
+      required: [document_number, document_date, subject, creator_id, file_path]
+      properties:
+        document_number:
+          type: string
+          minLength: 1
+          maxLength: 100
+        document_date:
+          type: string
+          format: date
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 255
+        creator_id:
+          type: integer
+        current_status:
+          type: string
+          maxLength: 50
+        file_path:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    DocumentUpdate:
+      type: object
+      properties:
+        document_number:
+          type: string
+          minLength: 1
+          maxLength: 100
+        document_date:
+          type: string
+          format: date
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 255
+        creator_id:
+          type: integer
+        current_status:
+          type: string
+          maxLength: 50
+        file_path:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    DocumentLog:
+      type: object
+      required: [id, document_id, action, timestamp]
+      properties:
+        id:
+          type: integer
+        document_id:
+          type: integer
+        user_id:
+          type: ["integer", "null"]
+        user_name:
+          type: ["string", "null"]
+        action:
+          type: string
+        notes:
+          type: ["string", "null"]
+        timestamp:
+          type: string
+          format: date-time
+
+    DocumentLogInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          minLength: 1
+          maxLength: 100
+        notes:
+          type: string

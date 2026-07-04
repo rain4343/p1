@@ -6,6 +6,7 @@ import departmentsRouter from "./departments";
 import usersRouter from "./users";
 import rolesRouter from "./roles";
 import dashboardRouter from "./dashboard";
+import documentsRouter from "./documents";
 
 const router: IRouter = Router();
 
@@ -19,5 +20,6 @@ router.use(departmentsRouter);
 router.use(usersRouter);
 router.use(rolesRouter);
 router.use(dashboardRouter);
+router.use(documentsRouter);
 
 export default router;

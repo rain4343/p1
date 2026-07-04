@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, Building2, Shield, Menu, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Shield, Menu, LogOut, FileText } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -10,6 +10,7 @@ const navItems = [
   { icon: Users, label: "بەڕێوەبردنی فەرمانبەران", href: "/staff" },
   { icon: Building2, label: "بەڕێوەبردنی هۆبەکان", href: "/departments" },
   { icon: Shield, label: "بەڕێوەبردنی ڕۆڵەکان", href: "/roles" },
+  { icon: FileText, label: "بەڕێوەبردنی بەڵگەنامەکان", href: "/documents" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
