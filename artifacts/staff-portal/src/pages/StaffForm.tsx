@@ -29,8 +29,12 @@ const userSchema = z.object({
   username: z.string().min(1, "ناوی بەکارهێنەر پێویستە").max(50),
   email: z.string().email("ئیمەیڵ هەڵەیە"),
   password: z.string().min(6, "ووشەی نهێنی دەبێت کەمتر نەبێت لە ٦ پیت").or(z.literal("")),
+  password_confirmation: z.string().optional(),
   department_id: z.coerce.number().nullable().optional(),
   role_ids: z.array(z.number()).default([])
+}).refine((data) => data.password === data.password_confirmation, {
+  message: "وشەی نهێنی و دووبارەکردنەوەکەی وەک یەک نین",
+  path: ["password_confirmation"]
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -98,7 +102,7 @@ export default function StaffForm() {
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
-    defaultValues: { full_name: "", username: "", email: "", password: "", department_id: null, role_ids: [] }
+    defaultValues: { full_name: "", username: "", email: "", password: "", password_confirmation: "", department_id: null, role_ids: [] }
   });
 
   const initializedRef = useRef(false);
@@ -109,6 +113,7 @@ export default function StaffForm() {
         username: user.username,
         email: user.email,
         password: "",
+        password_confirmation: "",
         department_id: user.department_id,
         role_ids: userRoles?.map(r => r.id) || []
       });
@@ -124,10 +129,13 @@ export default function StaffForm() {
         form.setError("password", { message: "ووشەی نهێنی بۆ فەرمانبەری نوێ پێویستە" });
         return;
       }
-      createMutation.mutate({ data: values as any });
+      const createData = { ...values };
+      delete (createData as any).password_confirmation;
+      createMutation.mutate({ data: createData as any });
     } else {
       const updateData = { ...values };
       if (!updateData.password) delete (updateData as any).password;
+      delete (updateData as any).password_confirmation;
       delete (updateData as any).role_ids;
       updateMutation.mutate({ id: userId as number, data: updateData });
     }
@@ -219,7 +227,7 @@ export default function StaffForm() {
               )} />
 
               <FormField control={form.control} name="password" render={({ field }) => (
-                <FormItem className="sm:col-span-2">
+                <FormItem>
                   <FormLabel>{isNew ? "ووشەی نهێنی" : "گۆڕینی ووشەی نهێنی"}</FormLabel>
                   <FormControl>
                     <Input
@@ -230,6 +238,21 @@ export default function StaffForm() {
                     />
                   </FormControl>
                   {isNew && <FormDescription>پێویستە بۆ دروستکردنی هەژمار.</FormDescription>}
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name="password_confirmation" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>دووبارەکردنەوەی ووشەی نهێنی</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder={isNew ? "ووشەی نهێنی دووبارە بنووسە" : "دووبارە بنووسەرەوە ئەگەر ووشەی نهێنیت گۆڕی"}
+                      style={ku}
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
