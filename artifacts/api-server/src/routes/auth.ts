@@ -1,4 +1,5 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
@@ -20,9 +21,22 @@ router.post("/auth/login", async (req, res) => {
     .where(eq(usersTable.username, String(username)))
     .limit(1);
 
-  if (!user || user.password !== String(password)) {
+  const isHashed = !!user?.password?.startsWith("$2");
+  const passwordMatches = user
+    ? isHashed
+      ? await bcrypt.compare(String(password), user.password)
+      : user.password === String(password)
+    : false;
+
+  if (!user || !passwordMatches) {
     res.status(401).json({ error: "ناوی بەکارهێنەر یان ووشەی نهێنی هەڵەیە" });
     return;
+  }
+
+  // Transparently upgrade legacy plaintext passwords to bcrypt hashes on successful login
+  if (!isHashed) {
+    const newHash = await bcrypt.hash(String(password), 10);
+    await db.update(usersTable).set({ password: newHash }).where(eq(usersTable.id, user.id));
   }
 
   // Rotate session ID to prevent session fixation attacks

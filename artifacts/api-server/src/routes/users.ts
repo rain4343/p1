@@ -1,4 +1,5 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { eq, ilike, and, inArray } from "drizzle-orm";
 import { db, usersTable, rolesTable, roleUserTable, departmentsTable } from "@workspace/db";
 import {
@@ -117,9 +118,11 @@ router.post("/users", async (req, res) => {
   const [existingEmail] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, userData.email)).limit(1);
   if (existingEmail) return res.status(409).json({ error: "Email already exists" });
 
+  const hashedPassword = await bcrypt.hash(userData.password, 10);
+
   // Transactional insert
   const result = await db.transaction(async (tx) => {
-    const [user] = await tx.insert(usersTable).values(userData).returning();
+    const [user] = await tx.insert(usersTable).values({ ...userData, password: hashedPassword }).returning();
     if (role_ids && role_ids.length > 0) {
       await tx.insert(roleUserTable).values(role_ids.map((role_id) => ({ user_id: user.id, role_id }))).onConflictDoNothing();
     }
@@ -160,6 +163,10 @@ router.patch("/users/:id", async (req, res) => {
 
   const [exists] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, id)).limit(1);
   if (!exists) return res.status(404).json({ error: "User not found" });
+
+  if (userData.password) {
+    userData.password = await bcrypt.hash(userData.password, 10);
+  }
 
   // Transactional update
   await db.transaction(async (tx) => {
