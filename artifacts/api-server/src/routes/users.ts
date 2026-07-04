@@ -189,6 +189,11 @@ router.patch("/users/:id", async (req, res) => {
 router.delete("/users/:id", async (req, res) => {
   const parsed = DeleteUserParams.safeParse(req.params);
   if (!parsed.success) return res.status(400).json({ error: "Invalid user ID" });
+
+  if (req.session?.userId === parsed.data.id) {
+    return res.status(400).json({ error: "ناتوانیت هەژماری خۆت بسڕیتەوە" });
+  }
+
   const [user] = await db.delete(usersTable).where(eq(usersTable.id, parsed.data.id)).returning();
   if (!user) return res.status(404).json({ error: "User not found" });
   return res.status(204).send();
